@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { X } from 'lucide-react';
 import { useFamilyData } from '../../context/FamilyDataContext';
 import PersonCombobox from './PersonCombobox';
+import PhotoUploadField from './PhotoUploadField';
 
 const avatar = (seed) =>
   `https://api.dicebear.com/9.x/notionists/svg?seed=${encodeURIComponent(seed)}&backgroundColor=e2e8f0`;
@@ -40,6 +41,7 @@ export default function MemberFormModal({ member, onClose }) {
 
   const handleChange = (field) => (e) => setForm((f) => ({ ...f, [field]: e.target.value }));
   const handleRelationChange = (field) => (value) => setForm((f) => ({ ...f, [field]: value }));
+  const handlePhotoChange = (value) => setForm((f) => ({ ...f, photo: value }));
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -191,10 +193,15 @@ export default function MemberFormModal({ member, onClose }) {
                 <option value="Female">Perempuan</option>
               </select>
             </Field>
-            <Field label="Foto (URL, opsional)">
-              <input value={form.photo} onChange={handleChange('photo')} placeholder="Otomatis jika kosong" className={inputCls} />
-            </Field>
+            <div />
           </div>
+
+          <Field label="Foto Profil (opsional)">
+            <PhotoUploadField value={form.photo} onChange={handlePhotoChange} seed={form.name} />
+          </Field>
+          <p className="-mt-2 text-xs text-slate-400">
+            Foto yang diupload otomatis dikecilkan & disimpan langsung di data situs (tanpa perlu Imgur/Drive). Kosongkan kalau mau pakai avatar ilustrasi otomatis.
+          </p>
 
           <div className="grid grid-cols-2 gap-3">
             <Field label="Tanggal Lahir">
