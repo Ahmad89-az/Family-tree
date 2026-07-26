@@ -6,7 +6,7 @@ import ProfileModal from '../profile/ProfileModal';
 import Breadcrumb from './Breadcrumb';
 import PersonJumpSearch from './PersonJumpSearch';
 import { useFamilyData } from '../../context/FamilyDataContext';
-import { findRoots } from '../../utils/familyUtils';
+import { findRoots, getMainRoot } from '../../utils/familyUtils';
 
 export default function FamilyTreeView() {
   const { members } = useFamilyData();
@@ -14,7 +14,7 @@ export default function FamilyTreeView() {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const containerRef = useRef(null);
   const roots = findRoots(members);
-  const [rootId, setRootId] = useState(roots[0]?.id);
+  const [rootId, setRootId] = useState(() => getMainRoot(members, roots)?.id);
 
   const toggleFullscreen = useCallback(() => {
     if (!containerRef.current) return;
@@ -46,7 +46,14 @@ export default function FamilyTreeView() {
         </div>
       </div>
 
-      <TransformWrapper minScale={0.15} maxScale={2} initialScale={0.6} centerOnInit wheel={{ step: 0.08 }}>
+      <TransformWrapper
+        minScale={0.15}
+        maxScale={2}
+        initialScale={0.6}
+        centerOnInit
+        limitToBounds={false}
+        wheel={{ step: 0.08 }}
+      >
         {({ zoomIn, zoomOut, resetTransform }) => (
           <>
             <div className="absolute bottom-5 right-5 z-10 flex flex-col gap-1.5 rounded-xl border border-[var(--color-border)] bg-white p-1.5 shadow-lg dark:border-slate-700 dark:bg-slate-800">

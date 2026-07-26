@@ -71,6 +71,36 @@ export function findRoots(members) {
   return members.filter((m) => !m.father && !m.mother);
 }
 
+// Total keturunan (anak, cucu, dst) dari seseorang.
+export function countDescendants(members, id, visited = new Set()) {
+  if (visited.has(id)) return 0;
+  visited.add(id);
+  const person = getMemberById(members, id);
+  if (!person) return 0;
+  const children = getChildren(members, person);
+  let count = children.length;
+  children.forEach((c) => {
+    count += countDescendants(members, c.id, visited);
+  });
+  return count;
+}
+
+// Di antara beberapa akar/leluhur, pilih yang punya jumlah keturunan terbanyak —
+// dipakai sebagai tampilan default pohon keluarga saat halaman pertama dibuka.
+export function getMainRoot(members, roots) {
+  if (!roots.length) return null;
+  let best = roots[0];
+  let bestCount = -1;
+  roots.forEach((r) => {
+    const count = countDescendants(members, r.id);
+    if (count > bestCount) {
+      bestCount = count;
+      best = r;
+    }
+  });
+  return best;
+}
+
 // Build nested tree node structure starting from a root id
 export function buildTreeNode(members, id, visited = new Set()) {
   if (visited.has(id)) return null;
