@@ -9,7 +9,20 @@ export function getSpouses(members, member) {
 }
 
 export function getChildren(members, member) {
-  return (member.children || []).map((id) => getMemberById(members, id)).filter(Boolean);
+  const kids = (member.children || []).map((id) => getMemberById(members, id)).filter(Boolean);
+  // Urutkan berdasarkan tanggal lahir (paling tua dulu), bukan urutan input data.
+  // Yang belum punya tanggal lahir tetap ditaruh di belakang, sesuai urutan asal.
+  return kids
+    .map((kid, index) => ({ kid, index }))
+    .sort((a, b) => {
+      const aDate = a.kid.birthDate ? new Date(a.kid.birthDate).getTime() : null;
+      const bDate = b.kid.birthDate ? new Date(b.kid.birthDate).getTime() : null;
+      if (aDate !== null && bDate !== null) return aDate - bDate;
+      if (aDate !== null) return -1;
+      if (bDate !== null) return 1;
+      return a.index - b.index;
+    })
+    .map((entry) => entry.kid);
 }
 
 export function getParents(members, member) {
