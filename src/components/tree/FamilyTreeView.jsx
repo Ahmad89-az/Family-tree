@@ -23,7 +23,7 @@ export default function FamilyTreeView() {
   useEffect(() => {
     // Tunggu satu tick supaya node barunya sudah ter-render dulu sebelum di-center.
     const id = requestAnimationFrame(() => {
-      transformRef.current?.resetTransform(0);
+      transformRef.current?.centerView(0.6, 0);
     });
     return () => cancelAnimationFrame(id);
   }, [rootId]);
@@ -80,7 +80,6 @@ export default function FamilyTreeView() {
 
             <TransformComponent
               wrapperStyle={{ width: '100%', height: '100%', flex: 1 }}
-              contentStyle={{ width: '100%' }}
             >
               <div className="px-16 py-16">
                 <ul className="org-tree">
