@@ -2,6 +2,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { X, MapPin, Briefcase, GraduationCap, Heart, Users, Baby, Calendar } from 'lucide-react';
 import { getParents, getSpouses, getChildren, getAge, formatDate, spouseLetter, getChildParentLabel } from '../../utils/familyUtils';
 import { useFamilyData } from '../../context/FamilyDataContext';
+import RelationshipChecker from './RelationshipChecker';
 
 export default function ProfileModal({ member, onClose, onNavigate }) {
   const { members } = useFamilyData();
@@ -98,6 +99,10 @@ export default function ProfileModal({ member, onClose, onNavigate }) {
                   getLabel={hasMultipleSpouses ? (child) => getChildParentLabel(member, child) : undefined}
                 />
               )}
+            </div>
+
+            <div className="mt-5">
+              <RelationshipChecker member={member} members={members} />
             </div>
 
             {member.gallery?.length > 0 && (

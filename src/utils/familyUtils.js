@@ -188,3 +188,153 @@ export function getChildParentLabel(member, child) {
   const idx = (member.spouse || []).indexOf(coParentId);
   return idx === -1 ? null : spouseLetter(idx);
 }
+
+// ============================================================
+// CEK HUBUNGAN KELUARGA
+// ============================================================
+
+// Telusuri semua leluhur seseorang (lewat ayah & ibu, ke atas terus),
+// sekaligus catat levelnya (0 = diri sendiri, 1 = ortu, 2 = kakek/nenek, dst)
+// dan "jejak" jalur ke tiap leluhur supaya bisa direkonstruksi belakangan.
+function getAncestorLevelsWithPath(members, id) {
+  const levels = new Map();
+  const prev = new Map();
+  const queue = [[id, 0]];
+  while (queue.length) {
+    const [curId, lvl] = queue.shift();
+    if (levels.has(curId)) continue;
+    levels.set(curId, lvl);
+    const person = getMemberById(members, curId);
+    if (!person) continue;
+    if (person.father && !levels.has(person.father)) {
+      prev.set(person.father, curId);
+      queue.push([person.father, lvl + 1]);
+    }
+    if (person.mother && !levels.has(person.mother)) {
+      prev.set(person.mother, curId);
+      queue.push([person.mother, lvl + 1]);
+    }
+  }
+  return { levels, prev };
+}
+
+// Rekonstruksi jalur dari seseorang naik ke salah satu leluhurnya, dipakai
+// buat nampilin alur silsilah (mis. "Kamu -> Ayah -> Kakek Hasanuddin").
+function reconstructPath(members, prev, fromId, ancestorId) {
+  const path = [fromId];
+  let cur = fromId;
+  while (cur !== ancestorId) {
+    const next = prev.get(cur);
+    if (!next) break;
+    path.push(next);
+    cur = next;
+  }
+  return path.map((id) => getMemberById(members, id)).filter(Boolean);
+}
+
+function directLabel(n) {
+  const down = { 1: 'Anak', 2: 'Cucu', 3: 'Cicit' };
+  const up = { 1: 'Orang Tua', 2: 'Kakek/Nenek', 3: 'Buyut' };
+  if (down[n]) return { down: down[n], up: up[n] };
+  return { down: `Keturunan generasi ke-${n}`, up: `Leluhur generasi ke-${n}` };
+}
+
+function branchLabel(diff) {
+  const map = { 1: ['Keponakan', 'Paman/Bibi'], 2: ['Cucu', 'Kakek/Nenek'], 3: ['Cicit', 'Buyut/Moyang'] };
+  if (map[diff]) return { down: map[diff][0], up: map[diff][1] };
+  return { down: `Keturunan generasi ke-${diff}`, up: `Leluhur generasi ke-${diff}` };
+}
+
+const COUSIN_WORDS = ['sekali', 'duakali', 'tigakali', 'empatkali', 'limakali', 'enamkali', 'tujuhkali', 'delapankali'];
+function cousinLabel(n) {
+  return `Sepupu ${COUSIN_WORDS[n - 1] || `${n}-kali`}`;
+}
+
+/**
+ * Hitung hubungan keluarga antara 2 orang berdasarkan leluhur bersama mereka.
+ * Bisa mengembalikan LEBIH DARI SATU hubungan sekaligus (misal kasus kawin
+ * sesama kerabat, dua orang bisa berkerabat lewat 2 jalur leluhur berbeda).
+ */
+export function getRelationship(members, idA, idB) {
+  if (idA === idB) return { same: true };
+  const a = getMemberById(members, idA);
+  const b = getMemberById(members, idB);
+  if (!a || !b) return null;
+
+  const { levels: levelsA, prev: prevA } = getAncestorLevelsWithPath(members, idA);
+  const { levels: levelsB, prev: prevB } = getAncestorLevelsWithPath(members, idB);
+
+  const commonIds = [...levelsA.keys()].filter((id) => levelsB.has(id));
+  if (commonIds.length === 0) return { none: true };
+
+  const candidates = commonIds.map((id) => ({ id, levelA: levelsA.get(id), levelB: levelsB.get(id) }));
+
+  // Cuma simpan leluhur bersama yang PALING DEKAT tiap jalurnya — kalau ada
+  // leluhur bersama yang lebih jauh tapi sudah "terwakili" oleh leluhur yang
+  // lebih dekat, itu dianggap redundan dan dibuang. Tapi kalau ada jalur
+  // leluhur bersama yang benar-benar berbeda (kawin sesama kerabat), keduanya
+  // tetap dipertahankan.
+  const minimal = candidates.filter(
+    (cand) =>
+      !candidates.some(
+        (other) =>
+          other.id !== cand.id &&
+          other.levelA <= cand.levelA &&
+          other.levelB <= cand.levelB &&
+          (other.levelA < cand.levelA || other.levelB < cand.levelB)
+      )
+  );
+
+  const siblingPair = minimal.filter((m) => m.levelA === 1 && m.levelB === 1);
+  const rest = minimal.filter((m) => !(m.levelA === 1 && m.levelB === 1));
+
+  const relations = [];
+
+  if (siblingPair.length > 0) {
+    const sameFather = !!a.father && a.father === b.father;
+    const sameMother = !!a.mother && a.mother === b.mother;
+    let label = 'Saudara';
+    if (sameFather && sameMother) label = 'Saudara Kandung';
+    else if (sameFather) label = 'Saudara Seayah';
+    else if (sameMother) label = 'Saudara Seibu';
+    relations.push({
+      label,
+      aToB: label,
+      bToA: label,
+      via: siblingPair.map((s) => getMemberById(members, s.id)).filter(Boolean),
+      pathA: siblingPair.map((s) => reconstructPath(members, prevA, idA, s.id)),
+      pathB: siblingPair.map((s) => reconstructPath(members, prevB, idB, s.id)),
+    });
+  }
+
+  rest.forEach(({ id, levelA, levelB }) => {
+    const ancestor = getMemberById(members, id);
+    const pathA = reconstructPath(members, prevA, idA, id);
+    const pathB = reconstructPath(members, prevB, idB, id);
+    let aToB, bToA, label;
+
+    if (levelA === 0 || levelB === 0) {
+      const n = Math.max(levelA, levelB);
+      const { down, up } = directLabel(n);
+      aToB = levelA === 0 ? down : up;
+      bToA = levelA === 0 ? up : down;
+      label = aToB;
+    } else if (levelA === levelB) {
+      label = cousinLabel(levelA - 1);
+      aToB = label;
+      bToA = label;
+    } else {
+      const diff = Math.abs(levelA - levelB);
+      const { down, up } = branchLabel(diff);
+      // levelA lebih kecil dari levelB artinya A lebih dekat ke leluhur bersama
+      // (generasi lebih "senior"), sehingga B berada di posisi "turunan" dari A.
+      aToB = levelA < levelB ? down : up;
+      bToA = levelA < levelB ? up : down;
+      label = aToB;
+    }
+
+    relations.push({ label, aToB, bToA, via: ancestor ? [ancestor] : [], pathA: [pathA], pathB: [pathB] });
+  });
+
+  return { relations };
+}
