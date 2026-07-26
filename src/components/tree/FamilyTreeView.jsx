@@ -1,4 +1,4 @@
-import { useRef, useState, useCallback } from 'react';
+import { useRef, useState, useCallback, useEffect } from 'react';
 import { TransformWrapper, TransformComponent } from 'react-zoom-pan-pinch';
 import { ZoomIn, ZoomOut, Maximize, Minimize, RotateCcw, Move } from 'lucide-react';
 import TreeNode from './TreeNode';
@@ -13,8 +13,20 @@ export default function FamilyTreeView() {
   const [selectedPerson, setSelectedPerson] = useState(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const containerRef = useRef(null);
+  const transformRef = useRef(null);
   const roots = findRoots(members);
   const [rootId, setRootId] = useState(() => getMainRoot(members, roots)?.id);
+
+  // Setiap kali root/orang yang dipilih berubah, geser & zoom tampilan
+  // dikembalikan ke tengah — supaya orang yang dipilih selalu langsung
+  // kelihatan, bukan nyangkut di posisi geser sebelumnya.
+  useEffect(() => {
+    // Tunggu satu tick supaya node barunya sudah ter-render dulu sebelum di-center.
+    const id = requestAnimationFrame(() => {
+      transformRef.current?.resetTransform(0);
+    });
+    return () => cancelAnimationFrame(id);
+  }, [rootId]);
 
   const toggleFullscreen = useCallback(() => {
     if (!containerRef.current) return;
@@ -47,6 +59,7 @@ export default function FamilyTreeView() {
       </div>
 
       <TransformWrapper
+        ref={transformRef}
         minScale={0.15}
         maxScale={2}
         initialScale={0.6}
