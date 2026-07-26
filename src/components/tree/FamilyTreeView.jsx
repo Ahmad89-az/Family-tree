@@ -4,6 +4,7 @@ import { ZoomIn, ZoomOut, Maximize, Minimize, RotateCcw, Move } from 'lucide-rea
 import TreeNode from './TreeNode';
 import ProfileModal from '../profile/ProfileModal';
 import Breadcrumb from './Breadcrumb';
+import PersonJumpSearch from './PersonJumpSearch';
 import { useFamilyData } from '../../context/FamilyDataContext';
 import { findRoots } from '../../utils/familyUtils';
 
@@ -38,15 +39,7 @@ export default function FamilyTreeView() {
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--color-border)] px-5 py-3 dark:border-slate-800">
         <div className="flex items-center gap-2">
           <label className="text-xs font-medium text-slate-400">Mulai dari:</label>
-          <select
-            value={rootId}
-            onChange={(e) => setRootId(e.target.value)}
-            className="rounded-md border border-[var(--color-border)] bg-white px-2.5 py-1.5 text-sm text-[#0F172A] dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
-          >
-            {roots.map((r) => (
-              <option key={r.id} value={r.id}>{r.name}</option>
-            ))}
-          </select>
+          <PersonJumpSearch members={members} currentId={rootId} onSelect={setRootId} />
         </div>
         <div className="flex items-center gap-1.5 text-xs text-slate-400">
           <Move size={13} /> Seret untuk geser &middot; Scroll untuk zoom
