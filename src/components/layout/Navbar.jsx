@@ -9,6 +9,7 @@ const links = [
   { to: '/cari', label: 'Cari Anggota' },
   { to: '/linimasa', label: 'Linimasa' },
   { to: '/statistik', label: 'Statistik' },
+  { to: '/peta', label: 'Peta' },
 ];
 
 export default function Navbar() {

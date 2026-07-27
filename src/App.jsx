@@ -8,6 +8,7 @@ import FamilyTreeView from './components/tree/FamilyTreeView';
 import SearchPage from './pages/SearchPage';
 import TimelinePage from './pages/TimelinePage';
 import StatsPage from './pages/StatsPage';
+import MapPage from './pages/MapPage';
 import AdminPage from './pages/AdminPage';
 import AdminAuthGate from './components/admin/AdminAuthGate';
 
@@ -25,6 +26,7 @@ export default function App() {
                 <Route path="/cari" element={<SearchPage />} />
                 <Route path="/linimasa" element={<TimelinePage />} />
                 <Route path="/statistik" element={<StatsPage />} />
+                <Route path="/peta" element={<MapPage />} />
                 <Route path="/admin" element={<AdminAuthGate><AdminPage /></AdminAuthGate>} />
               </Routes>
             </main>
