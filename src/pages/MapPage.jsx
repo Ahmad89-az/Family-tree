@@ -17,17 +17,6 @@ const BASEMAPS = {
       },
     ],
   },
-  esriImagery: {
-    label: 'Esri Imagery',
-    layers: [
-      {
-        // Citra satelit asli — cocok buat lihat "wujud asli" daerah tempat
-        // anggota keluarga tinggal.
-        url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-        attribution: '&copy; Esri',
-      },
-    ],
-  },
   esriNatGeo: {
     label: 'Esri NatGeo',
     layers: [
@@ -35,6 +24,17 @@ const BASEMAPS = {
         // Gaya khas National Geographic — warna alami, lebih artistik.
         url: 'https://server.arcgisonline.com/ArcGIS/rest/services/NatGeo_World_Map/MapServer/tile/{z}/{y}/{x}',
         attribution: '&copy; Esri, National Geographic',
+      },
+    ],
+  },
+   esriImagery: {
+    label: 'Esri Imagery',
+    layers: [
+      {
+        // Citra satelit asli — cocok buat lihat "wujud asli" daerah tempat
+        // anggota keluarga tinggal.
+        url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+        attribution: '&copy; Esri',
       },
     ],
   },
