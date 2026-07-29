@@ -28,14 +28,19 @@ function setCached(address, value) {
 
 async function geocodeOne(address) {
   const cached = getCached(address);
-  if (cached !== undefined) return cached; // bisa berupa {lat,lng} ATAU null (memang tidak ketemu)
+  if (cached !== undefined) return cached; // bisa berupa {lat,lng,province} ATAU null (memang tidak ketemu)
 
   try {
-    const url = `${NOMINATIM_URL}?format=json&limit=1&countrycodes=id&q=${encodeURIComponent(address)}`;
+    const url = `${NOMINATIM_URL}?format=json&limit=1&countrycodes=id&addressdetails=1&q=${encodeURIComponent(address)}`;
     const res = await fetch(url);
     const data = await res.json();
-    const result = data?.[0]
-      ? { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) }
+    const first = data?.[0];
+    const result = first
+      ? {
+          lat: parseFloat(first.lat),
+          lng: parseFloat(first.lon),
+          province: first.address?.state || first.address?.province || null,
+        }
       : null;
     setCached(address, result);
     return result;
@@ -48,7 +53,7 @@ async function geocodeOne(address) {
  * Geocode banyak alamat sekaligus, satu per satu dengan jeda ~1.1 detik
  * antar panggilan ke layanan luar (mengikuti kebijakan pemakaian wajar
  * Nominatim). Alamat yang sudah ada di cache tidak perlu menunggu jeda.
- * Mengembalikan Map: alamat asli -> {lat,lng} | null.
+ * Mengembalikan Map: alamat asli -> {lat,lng,province} | null.
  */
 export async function geocodeAddresses(addresses, onProgress) {
   const unique = [...new Set(addresses.map((a) => a.trim()).filter(Boolean))];
